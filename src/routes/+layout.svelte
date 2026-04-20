@@ -8,6 +8,7 @@
 	let { children } = $props();
 
     let isDark = $state(false);
+    let isMenuOpen = $state(false);
     let canvas;
 
     onMount(() => {
@@ -152,6 +153,14 @@
             isDark = true;
         }
     }
+
+    function toggleMenu() {
+        isMenuOpen = !isMenuOpen;
+    }
+
+    function closeMenu() {
+        isMenuOpen = false;
+    }
 </script>
 
 <div class="app">
@@ -162,17 +171,24 @@
 		<div class="container nav-content">
 			<a href="#hero" class="logo">PK.</a>
 			<div class="nav-right">
-				<ul class="nav-links">
-					<li><a href="#about">About</a></li>
-					<li><a href="#experience">Experience</a></li>
-					<li><a href="#projects">Projects</a></li>
-					<li><a href="#skills">Skills</a></li>
+				<ul class="nav-links" class:open={isMenuOpen}>
+					<li><a href="#about" onclick={closeMenu}>About</a></li>
+					<li><a href="#experience" onclick={closeMenu}>Experience</a></li>
+					<li><a href="#projects" onclick={closeMenu}>Projects</a></li>
+					<li><a href="#skills" onclick={closeMenu}>Skills</a></li>
 				</ul>
 				<button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle Theme">
 					{#if isDark}
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
 					{:else}
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+					{/if}
+				</button>
+				<button class="menu-toggle" onclick={toggleMenu} aria-label="Toggle Menu">
+					{#if isMenuOpen}
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+					{:else}
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
 					{/if}
 				</button>
 			</div>
@@ -283,7 +299,7 @@
 			display: flex;
 			gap: 2.5rem;
 			margin: 0;
-			padding: 0;
+			padding: 1rem 0;
 
 			a {
 				color: var(--secondary-color);
@@ -320,6 +336,20 @@
 				transform: scale(1.05);
 			}
 		}
+
+		.menu-toggle {
+			display: none;
+			background: transparent;
+			border: none;
+			color: var(--text-color);
+			cursor: pointer;
+			margin-left: 1rem;
+			padding: 0.5rem;
+			
+			&:hover {
+				color: var(--primary-color);
+			}
+		}
 	}
 
 	main {
@@ -340,8 +370,59 @@
 	}
 
 	@media (max-width: 768px) {
+		.navbar {
+			.nav-content {
+				height: 60px;
+			}
+			.logo {
+				font-size: 1.5rem;
+			}
+			.theme-toggle {
+				margin-left: 0.5rem;
+			}
+		}
+
+		.menu-toggle {
+			display: block !important;
+		}
+
 		.nav-links {
-			display: none; /* simple mobile fallback */
+			position: absolute;
+			top: 60px;
+			left: 0;
+			right: 0;
+			background: var(--card-bg);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+			border-bottom: 1px solid var(--border-color);
+			flex-direction: column;
+			padding: 2rem;
+			gap: 2rem !important;
+			align-items: center;
+			transform: translateY(-150%);
+			opacity: 0;
+			pointer-events: none;
+			transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+			box-shadow: var(--card-shadow);
+
+			&.open {
+				transform: translateY(0);
+				opacity: 1;
+				pointer-events: auto;
+			}
+
+			a {
+				font-size: 1.1rem;
+			}
+		}
+
+		main {
+			padding-top: 60px;
+		}
+
+		footer {
+			padding: 2rem 0;
+			font-size: 0.9rem;
 		}
 	}
 </style>

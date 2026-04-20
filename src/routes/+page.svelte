@@ -127,9 +127,11 @@
     </section>
 
     <!-- About Section -->
-    <section id="about" class="about animate-section bento-card">
+    <section id="about" class="about animate-section">
         <h2><User class="icon-heading" size={36} /> About Me</h2>
-        <p>{me.summary}</p>
+        <div class="bento-card">
+            <p>{me.summary}</p>
+        </div>
     </section>
 
     <!-- Experience Section -->
@@ -224,15 +226,17 @@
     </section>
 
     <!-- Education Section -->
-    <section id="education" class="education animate-section bento-card">
+    <section id="education" class="education animate-section">
         <h2><GraduationCap class="icon-heading" size={36} /> Education</h2>
-        {#each education as edu}
-            <div class="edu-item">
-                <h3>{edu.institution}</h3>
-                <h4>{edu.degree}</h4>
-                <p>{edu.date} • {edu.grade}</p>
-            </div>
-        {/each}
+        <div class="bento-card">
+            {#each education as edu}
+                <div class="edu-item">
+                    <h3>{edu.institution}</h3>
+                    <h4>{edu.degree}</h4>
+                    <p>{edu.date} • {edu.grade}</p>
+                </div>
+            {/each}
+        </div>
     </section>
 </div>
 
@@ -378,7 +382,6 @@
     }
 
     .about {
-        scroll-margin-top: 100px;
         p {
             font-size: 1.15rem;
             line-height: 1.8;
@@ -587,17 +590,60 @@
 
     @media (max-width: 768px) {
         .hero {
-            h1 { font-size: 2.8rem; }
-            h2 { font-size: 1.5rem; }
+            padding-top: 5vh;
+            min-height: 80vh;
+
+            h1 { 
+                font-size: 2.5rem; 
+                line-height: 1.2;
+                margin-bottom: 1rem;
+            }
+            h2 { font-size: 1.3rem; }
+            
+            .tagline {
+                font-size: 1.1rem;
+            }
+
+            .actions {
+                flex-direction: column;
+                width: 100%;
+                
+                .btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+            }
         }
         
         .timeline {
+            padding-left: 1.5rem;
+
             .timeline-item {
                 padding: 1.5rem;
+                
                 .timeline-dot {
-                    left: -1.9rem;
+                    left: -1.4rem;
+                    width: 12px;
+                    height: 12px;
+                }
+                
+                .timeline-content {
+                    h3 { font-size: 1.2rem; }
+                    h4 { font-size: 1rem; }
+                    ul li { font-size: 0.95rem; }
                 }
             }
+        }
+
+        .skills .skill-category .tags .tag {
+            font-size: 0.85rem;
+            padding: 0.4rem 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .bento-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>

@@ -37,6 +37,11 @@
     --heading-glow: 0 0 30px rgba(99, 102, 241, 0.3);
 }
 
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 60px;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -70,7 +75,7 @@ a {
 }
 
 section {
-    padding: 7rem 0;
+    padding: 4rem 0;
     position: relative;
 }
 
@@ -123,5 +128,26 @@ h2 {
             opacity: 1;
             background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
         }
+    }
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    section {
+        padding: 2rem 0;
+    }
+
+    h2 {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .bento-card {
+        padding: 1.5rem;
+        border-radius: 20px;
     }
 }
