@@ -177,7 +177,8 @@
             if (!overlay) {
                 overlay = document.createElement("div");
                 overlay.id = "trippy-overlay";
-                overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; backdrop-filter: hue-rotate(90deg); transition: opacity 1s; opacity: 0;";
+                // A hue-rotate of 90-120deg on a dark blueish synthwave theme usually triggers vibrant reds/magentas.
+                overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; backdrop-filter: hue-rotate(120deg) saturate(200%); transition: opacity 1s; opacity: 0;";
                 document.body.appendChild(overlay);
             }
 
@@ -185,33 +186,29 @@
             const centerY = scrollY + (window.innerHeight / 2);
             document.body.style.transformOrigin = `50% ${centerY}px`;
 
-            const bottomInset = document.body.scrollHeight - scrollY - window.innerHeight;
-            const fixedSelector = '.particle-canvas, .bg-image, .animated-bg, .navbar, #trippy-overlay';
-
-            document.body.style.animation = 'none';
-            void document.body.offsetWidth; 
-
             if (isEasterEggActive) {
-                document.body.style.clipPath = `inset(${scrollY}px 0px ${bottomInset}px 0px)`;
-                document.querySelectorAll(fixedSelector).forEach(el => {
-                    el.style.transform = `translateY(${scrollY}px)`;
-                });
+                document.body.style.transition = 'transform 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                document.body.style.transform = 'rotate(360deg)';
                 overlay.style.opacity = '1';
-                document.body.style.animation = 'epic-spin 2.5s ease-in-out';
+                
+                setTimeout(() => {
+                    document.body.style.transition = 'none';
+                    document.body.style.transform = ''; 
+                }, 1500);
             } else {
+                document.body.style.transition = 'none';
+                document.body.style.transform = 'rotate(360deg)';
+                void document.body.offsetWidth; // Force reflow
+                
+                document.body.style.transition = 'transform 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                document.body.style.transform = 'rotate(0deg)';
                 overlay.style.opacity = '0';
-                document.body.style.animation = 'epic-spin 2.5s ease-in-out reverse';
+                
+                setTimeout(() => {
+                    document.body.style.transition = 'none';
+                    document.body.style.transform = ''; 
+                }, 1500);
             }
-            
-            setTimeout(() => {
-                document.body.style.animation = '';
-                if (!isEasterEggActive) {
-                    document.body.style.clipPath = 'none';
-                    document.querySelectorAll(fixedSelector).forEach(el => {
-                        el.style.transform = 'none';
-                    });
-                }
-            }, 2500);
         }
 
         return () => {
