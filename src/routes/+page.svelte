@@ -577,6 +577,10 @@
         }
     }
 
+    .projects {
+        padding-top: 2rem;
+    }
+
     .education {
         margin-bottom: 4rem; /* Bottom padding for the page */
         
