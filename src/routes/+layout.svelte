@@ -136,8 +136,87 @@
         resize();
         draw();
 
+        // --- DEVELOPER EASTER EGG 🥚 ---
+        console.log(
+            "%cHello Fellow Developer! 👋\n%cDid you really think I'd build a portfolio without an easter egg?\nTry typing the Konami Code: ↑ ↑ ↓ ↓ ← → ← → B A",
+            "color: #4f46e5; font-size: 20px; font-weight: bold; border-bottom: 2px solid #ec4899; padding-bottom: 10px;",
+            "color: #64748b; font-size: 14px; padding-top: 10px;"
+        );
+
+        let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
+        const handleKonami = (e) => {
+            if (e.key.toLowerCase() === konamiCode[konamiIndex].toLowerCase()) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    activateEasterEgg();
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        };
+
+        window.addEventListener('keydown', handleKonami);
+
+        let isEasterEggActive = false;
+
+        function activateEasterEgg() {
+            isEasterEggActive = !isEasterEggActive;
+            
+            if (isEasterEggActive) {
+                console.log("%c🚨 Easter Egg Activated: SUPER ANTIGRAVITY MODE 🚀", "color: #10b981; font-weight: bold; font-size: 18px;");
+                mouse.radius = 1000;
+            } else {
+                console.log("%cEaster Egg Deactivated. Returning to normal.", "color: #64748b; font-size: 14px;");
+                mouse.radius = 200;
+            }
+
+            let overlay = document.getElementById("trippy-overlay");
+            if (!overlay) {
+                overlay = document.createElement("div");
+                overlay.id = "trippy-overlay";
+                overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; backdrop-filter: hue-rotate(90deg); transition: opacity 1s; opacity: 0;";
+                document.body.appendChild(overlay);
+            }
+
+            const scrollY = window.scrollY;
+            const centerY = scrollY + (window.innerHeight / 2);
+            document.body.style.transformOrigin = `50% ${centerY}px`;
+
+            const bottomInset = document.body.scrollHeight - scrollY - window.innerHeight;
+            const fixedSelector = '.particle-canvas, .bg-image, .animated-bg, .navbar, #trippy-overlay';
+
+            document.body.style.animation = 'none';
+            void document.body.offsetWidth; 
+
+            if (isEasterEggActive) {
+                document.body.style.clipPath = `inset(${scrollY}px 0px ${bottomInset}px 0px)`;
+                document.querySelectorAll(fixedSelector).forEach(el => {
+                    el.style.transform = `translateY(${scrollY}px)`;
+                });
+                overlay.style.opacity = '1';
+                document.body.style.animation = 'epic-spin 2.5s ease-in-out';
+            } else {
+                overlay.style.opacity = '0';
+                document.body.style.animation = 'epic-spin 2.5s ease-in-out reverse';
+            }
+            
+            setTimeout(() => {
+                document.body.style.animation = '';
+                if (!isEasterEggActive) {
+                    document.body.style.clipPath = 'none';
+                    document.querySelectorAll(fixedSelector).forEach(el => {
+                        el.style.transform = 'none';
+                    });
+                }
+            }, 2500);
+        }
+
         return () => {
             window.removeEventListener('resize', resize);
+            window.removeEventListener('keydown', handleKonami);
             cancelAnimationFrame(animationFrame);
         };
     });
