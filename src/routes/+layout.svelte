@@ -26,10 +26,10 @@
         let width, height;
         let particles = [];
         const spacing = 35; // Distance between dots
-        const mouse = { x: -1000, y: -1000, radius: 200 }; // Larger radius for the spread
+        const mouse = { x: -1000, y: -1000, radius: 200 };
         let animationFrame;
+        let isMatrixModeActive = false;
 
-        // Bright, glowing colors for the antigravity effect
         const lightColors = ['rgba(226, 232, 240, 0.4)', 'rgba(148, 163, 184, 0.4)', 'rgba(129, 140, 248, 0.4)', 'rgba(167, 139, 250, 0.4)'];
         const darkColors = ['rgba(30, 41, 59, 0.4)', 'rgba(71, 85, 105, 0.4)', 'rgba(79, 70, 229, 0.4)', 'rgba(219, 39, 119, 0.4)'];
 
@@ -63,17 +63,19 @@
             const isDarkMode = document.documentElement.classList.contains('dark');
             const currentColors = isDarkMode ? lightColors : darkColors;
 
-            // Draw multi-color circular spread (aura) behind the cursor
             if (mouse.x !== -1000 && mouse.y !== -1000) {
                 ctx.save();
-                
-                // Add composite operation for a vibrant glow/blend effect
                 ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'multiply';
                 
                 const glowRadius = mouse.radius * 1.8;
                 const gradient = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, glowRadius);
                 
-                if (isDarkMode) {
+                if (isMatrixModeActive) {
+                    ctx.globalCompositeOperation = 'screen';
+                    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.5)'); // Bright Green
+                    gradient.addColorStop(0.4, 'rgba(34, 197, 94, 0.15)');
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                } else if (isDarkMode) {
                     gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Vivid Indigo
                     gradient.addColorStop(0.3, 'rgba(167, 139, 250, 0.25)'); // Bright Violet
                     gradient.addColorStop(0.6, 'rgba(236, 72, 153, 0.08)'); // Vibrant Pink
@@ -101,23 +103,26 @@
                 if (distance < mouse.radius) {
                     const force = (mouse.radius - distance) / mouse.radius;
                     const angle = Math.atan2(dy, dx);
-                    // Push particles away for the antigravity effect
                     const pushX = Math.cos(angle) * force * 25; 
                     const pushY = Math.sin(angle) * force * 25;
                     
                     p.x = p.baseX - pushX;
                     p.y = p.baseY - pushY;
                 } else {
-                    // Return smoothly to base position
                     p.x -= (p.x - p.baseX) * 0.1;
                     p.y -= (p.y - p.baseY) * 0.1;
                 }
 
-                ctx.beginPath();
-                // Base colors are dim, but when near the mouse they can brighten slightly (optional enhancement)
-                ctx.fillStyle = currentColors[p.colorIndex];
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
+                if (isMatrixModeActive) {
+                    ctx.fillStyle = 'rgba(34, 197, 94, 0.9)'; 
+                    ctx.font = "14px monospace";
+                    ctx.fillText(Math.random() > 0.5 ? "0" : "1", p.x, p.y);
+                } else {
+                    ctx.beginPath();
+                    ctx.fillStyle = currentColors[p.colorIndex];
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
 
             animationFrame = requestAnimationFrame(draw);
@@ -136,32 +141,42 @@
         resize();
         draw();
 
-        // --- DEVELOPER EASTER EGG 🥚 ---
+        // --- DEVELOPER EASTER EGGS 🥚 ---
         console.log(
-            "%cHello Fellow Developer! 👋\n%cDid you really think I'd build a portfolio without an easter egg?\nTry typing the Konami Code: ↑ ↑ ↓ ↓ ← → ← → B A",
+            "%cHello Fellow Developer! 👋\n%cDid you really think I'd build a portfolio without an easter egg?\nTry typing the Konami Code: ↑ ↑ ↓ ↓ ← → ← → B A\n%cOther Secret Codes to try: matrix, fall, doge",
             "color: #4f46e5; font-size: 20px; font-weight: bold; border-bottom: 2px solid #ec4899; padding-bottom: 10px;",
-            "color: #64748b; font-size: 14px; padding-top: 10px;"
+            "color: #64748b; font-size: 14px; padding-top: 10px;",
+            "color: #ec4899; font-size: 14px; font-weight: bold; padding-top: 5px;"
         );
 
-        let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-        let konamiIndex = 0;
+        let keyBuffer = '';
+        const handleKeys = (e) => {
+            keyBuffer += e.key.toLowerCase();
+            if (keyBuffer.length > 30) keyBuffer = keyBuffer.slice(-30);
 
-        const handleKonami = (e) => {
-            if (e.key.toLowerCase() === konamiCode[konamiIndex].toLowerCase()) {
-                konamiIndex++;
-                if (konamiIndex === konamiCode.length) {
-                    activateEasterEgg();
-                    konamiIndex = 0;
-                }
-            } else {
-                konamiIndex = 0;
+            if (keyBuffer.includes('arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba')) {
+                activateEasterEgg();
+                keyBuffer = '';
+            } else if (keyBuffer.includes('matrix')) {
+                activateMatrixMode();
+                keyBuffer = '';
+            } else if (keyBuffer.includes('iddqd')) {
+                activateGodMode();
+                keyBuffer = '';
+            } else if (keyBuffer.includes('fall')) {
+                activateChaosMode();
+                keyBuffer = '';
+            } else if (keyBuffer.includes('doge')) {
+                activateDogeMode();
+                keyBuffer = '';
             }
         };
 
-        window.addEventListener('keydown', handleKonami);
+        window.addEventListener('keydown', handleKeys);
+
+        // --- EASTER EGG LOGIC ---
 
         let isEasterEggActive = false;
-
         function activateEasterEgg() {
             isEasterEggActive = !isEasterEggActive;
             
@@ -177,7 +192,6 @@
             if (!overlay) {
                 overlay = document.createElement("div");
                 overlay.id = "trippy-overlay";
-                // A hue-rotate of 90-120deg on a dark blueish synthwave theme usually triggers vibrant reds/magentas.
                 overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; backdrop-filter: hue-rotate(120deg) saturate(200%); transition: opacity 1s; opacity: 0;";
                 document.body.appendChild(overlay);
             }
@@ -211,9 +225,87 @@
             }
         }
 
+        function activateMatrixMode() {
+            isMatrixModeActive = !isMatrixModeActive;
+            if (isMatrixModeActive) {
+                document.documentElement.classList.add('matrix-mode');
+                console.log("%c🖲️ MATRIX MODE ACTIVATED", "color: #22c55e; font-size: 16px;");
+            } else {
+                document.documentElement.classList.remove('matrix-mode');
+                console.log("%cMatrix Mode Deactivated", "color: #64748b; font-size: 14px;");
+            }
+        }
+
+        let godModeActive = false;
+        function activateGodMode() {
+            godModeActive = !godModeActive;
+            document.designMode = godModeActive ? 'on' : 'off';
+            if (godModeActive) {
+                document.documentElement.classList.add('god-mode');
+                document.body.style.border = '5px solid gold';
+                document.body.style.boxSizing = 'border-box';
+                console.log("%c👼 GOD MODE ACTIVATED: You can now edit the entire website.", "color: gold; font-size: 16px; font-weight: bold;");
+            } else {
+                document.documentElement.classList.remove('god-mode');
+                document.body.style.border = 'none';
+                console.log("%cGod Mode Deactivated.", "color: gray;");
+            }
+        }
+
+        let chaosTriggered = false;
+        function activateChaosMode() {
+            if (chaosTriggered) return;
+            chaosTriggered = true;
+            console.log("%c🌪️ CHAOS MODE INITIATED", "color: red; font-size: 18px; font-weight: bold;");
+            const elements = document.querySelectorAll('.bento-card, h2, p, .logo, .nav-links li, .theme-toggle');
+            elements.forEach(el => {
+                el.style.transition = `all ${1 + Math.random() * 2}s cubic-bezier(0.25, 1, 0.5, 1)`;
+                el.style.transform = `translateY(${window.innerHeight + 500}px) rotate(${Math.random() * 720 - 360}deg) translateX(${Math.random() * 500 - 250}px)`;
+                el.style.opacity = '0';
+            });
+            setTimeout(() => {
+                alert("Oops! You broke it! Refresh the page to reconstruct the DOM.");
+            }, 4000);
+        }
+
+        let isDogeModeActive = false;
+        function activateDogeMode() {
+            isDogeModeActive = !isDogeModeActive;
+            if (isDogeModeActive) {
+                document.documentElement.classList.add('doge-mode');
+                console.log("%c🐕 WOW. MUCH EASTER EGG. VERY DEVELOPER.", "color: orange; font-size: 16px; font-family: 'Comic Sans MS';");
+                
+                const wowWords = ["wow", "such code", "very responsive", "much skill", "so bento"];
+                const wowInterval = setInterval(() => {
+                    if (!isDogeModeActive) { clearInterval(wowInterval); return; }
+                    let el = document.createElement('div');
+                    el.innerText = wowWords[Math.floor(Math.random() * wowWords.length)];
+                    el.style.position = 'fixed';
+                    el.style.top = Math.random() * 90 + 'vh';
+                    el.style.left = Math.random() * 90 + 'vw';
+                    el.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    el.style.fontFamily = "'Comic Sans MS', sans-serif";
+                    el.style.fontSize = (1 + Math.random()) + 'rem';
+                    el.style.fontWeight = 'bold';
+                    el.style.zIndex = '9999';
+                    el.style.pointerEvents = 'none';
+                    el.style.transition = 'transform 4s linear';
+                    document.body.appendChild(el);
+                    
+                    // Trigger reflow then animate
+                    void el.offsetWidth;
+                    el.style.transform = `translateY(-300px) rotate(${Math.random() * 180 - 90}deg) scale(${1.5})`;
+                    
+                    setTimeout(() => el.remove(), 4000);
+                }, 800);
+            } else {
+                document.documentElement.classList.remove('doge-mode');
+            }
+        }
+
         return () => {
             window.removeEventListener('resize', resize);
-            window.removeEventListener('keydown', handleKonami);
+            window.removeEventListener('keydown', handleKeys);
             cancelAnimationFrame(animationFrame);
         };
     });

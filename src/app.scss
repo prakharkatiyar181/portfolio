@@ -94,6 +94,60 @@ h2 {
     text-shadow: var(--heading-glow);
 }
 
+/* Matrix & Doge Easter Egg Overrides */
+:root.matrix-mode {
+    --bg-color: #050505;
+    --text-color: #22c55e;
+    --primary-color: #4ade80;
+    --secondary-color: #166534;
+    --accent-color: #22c55e;
+    --glass-bg: rgba(0, 15, 0, 0.85);
+    --border-color: #14532d;
+    --card-bg: rgba(0, 30, 0, 0.7);
+    --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+    --card-hover-shadow: 0 20px 40px -10px rgba(74, 222, 128, 0.3);
+    --heading-glow: 0 0 30px rgba(74, 222, 128, 0.3);
+}
+
+:root.matrix-mode body * {
+    font-family: 'Courier New', Courier, monospace !important;
+}
+
+:root.matrix-mode .bg-image { display: none !important; }
+:root.matrix-mode .animated-bg {
+    background: radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 40%) !important;
+    filter: blur(60px) !important;
+}
+
+:root.doge-mode {
+    --bg-color: #fffbdf;
+    --text-color: #ff00ff;
+    --primary-color: #00ffff;
+    --secondary-color: #0d1117;
+    --accent-color: #ff9900;
+    --glass-bg: rgba(255, 255, 0, 0.2);
+    --border-color: #ff00ff;
+    --card-bg: rgba(255, 220, 220, 0.8);
+    --heading-glow: none;
+}
+
+:root.doge-mode body * {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif !important;
+}
+
+/* God Mode Editable Styles */
+:root.god-mode h1, 
+:root.god-mode h2, 
+:root.god-mode h3 {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+:root.god-mode .highlight {
+    background: none;
+    -webkit-text-fill-color: inherit;
+}
+
 /* Modern Aesthetic Bento Card */
 .bento-card {
     background: var(--card-bg);
