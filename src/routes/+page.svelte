@@ -24,11 +24,12 @@
         Promise.all([
             fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/solved').then(r => r.json()),
             fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078').then(r => r.json()),
-            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/calendar').then(r => r.json())
+            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/calendar').then(r => r.json()),
+            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/badges').then(r => r.json())
         ])
-        .then(([solvedData, profileData, calendarData]) => {
+        .then(([solvedData, profileData, calendarData, badgesData]) => {
             if (solvedData && solvedData.solvedProblem) {
-                leetcodeData = { ...solvedData, ...profileData };
+                leetcodeData = { ...solvedData, ...profileData, badgesCount: badgesData?.badgesCount || 0, badges: badgesData?.badges || [] };
                 
                 if (calendarData && calendarData.submissionCalendar) {
                     const calendar = JSON.parse(calendarData.submissionCalendar);
@@ -317,6 +318,19 @@
                             </div>
                         </div>
                     </div>
+                    
+                    {#if leetcodeData.badges && leetcodeData.badges.length > 0}
+                    <div class="badges-container">
+                        <h4>Earned Badges ({leetcodeData.badgesCount})</h4>
+                        <div class="badges-list">
+                            {#each leetcodeData.badges as badge}
+                                <div class="badge-item" title={badge.displayName}>
+                                    <img src={badge.icon.startsWith('/') ? 'https://leetcode.com' + badge.icon : badge.icon} alt={badge.displayName} loading="lazy" />
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                    {/if}
                     
                     {#if contributionGrid.length > 0}
                     <div class="calendar-container">
@@ -866,6 +880,51 @@
                     &.hard {
                         .stat-label { color: #ef4743; }
                         .bar-fill { background: #ef4743; box-shadow: 0 0 10px rgba(239, 71, 67, 0.5); }
+                    }
+                }
+            }
+        }
+
+        .badges-container {
+            width: 100%;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px dashed var(--border-color);
+
+            h4 {
+                color: var(--text-color);
+                margin: 0 0 1rem 0;
+                font-size: 1.15rem;
+                font-weight: 600;
+            }
+
+            .badges-list {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                
+                .badge-item {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 55px;
+                    height: 55px;
+                    border-radius: 50%;
+                    background: var(--bg-color);
+                    border: 1px solid var(--border-color);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+                    img {
+                        width: 40px;
+                        height: 40px;
+                        object-fit: contain;
+                    }
+
+                    &:hover {
+                        transform: translateY(-5px) scale(1.1);
+                        border-color: #ffa116;
+                        box-shadow: 0 8px 15px rgba(255, 161, 22, 0.2);
                     }
                 }
             }
