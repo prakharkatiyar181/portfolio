@@ -29,6 +29,7 @@
         const mouse = { x: -1000, y: -1000, radius: 200 };
         let animationFrame;
         let isMatrixModeActive = false;
+        let isEasterEggActive = false;
 
         const lightColors = ['rgba(226, 232, 240, 0.4)', 'rgba(148, 163, 184, 0.4)', 'rgba(129, 140, 248, 0.4)', 'rgba(167, 139, 250, 0.4)'];
         const darkColors = ['rgba(30, 41, 59, 0.4)', 'rgba(71, 85, 105, 0.4)', 'rgba(79, 70, 229, 0.4)', 'rgba(219, 39, 119, 0.4)'];
@@ -75,6 +76,11 @@
                     gradient.addColorStop(0, 'rgba(34, 197, 94, 0.5)'); // Bright Green
                     gradient.addColorStop(0.4, 'rgba(34, 197, 94, 0.15)');
                     gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                } else if (isEasterEggActive) {
+                    ctx.globalCompositeOperation = isDarkMode ? 'screen' : 'multiply';
+                    gradient.addColorStop(0, isDarkMode ? 'rgba(250, 204, 21, 0.25)' : 'rgba(245, 158, 11, 0.15)'); // Gold Firefly Glow
+                    gradient.addColorStop(0.4, isDarkMode ? 'rgba(251, 146, 60, 0.1)' : 'rgba(245, 158, 11, 0.05)'); 
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
                 } else if (isDarkMode) {
                     gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Vivid Indigo
                     gradient.addColorStop(0.3, 'rgba(167, 139, 250, 0.25)'); // Bright Violet
@@ -100,14 +106,24 @@
                 let dy = mouse.y - p.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
                 
+                if (isEasterEggActive) {
+                    if (!p.speed) p.speed = 0.5 + Math.random() * 1.5;
+                    p.baseY -= p.speed;
+                    p.baseX += Math.sin(p.baseY * 0.01) * 0.5;
+                    if (p.baseY < -50) p.baseY = height + 50;
+                    if (p.baseX < -50) p.baseX = width + 50;
+                    if (p.baseX > width + 50) p.baseX = -50;
+                }
+
                 if (distance < mouse.radius) {
                     const force = (mouse.radius - distance) / mouse.radius;
                     const angle = Math.atan2(dy, dx);
-                    const pushX = Math.cos(angle) * force * 25; 
-                    const pushY = Math.sin(angle) * force * 25;
+                    const pushMultiplier = isEasterEggActive ? 80 : 25;
+                    const pushX = Math.cos(angle) * force * pushMultiplier; 
+                    const pushY = Math.sin(angle) * force * pushMultiplier;
                     
-                    p.x = p.baseX - pushX;
-                    p.y = p.baseY - pushY;
+                    p.x -= (p.x - (p.baseX - pushX)) * 0.1;
+                    p.y -= (p.y - (p.baseY - pushY)) * 0.1;
                 } else {
                     p.x -= (p.x - p.baseX) * 0.1;
                     p.y -= (p.y - p.baseY) * 0.1;
@@ -119,8 +135,16 @@
                     ctx.fillText(Math.random() > 0.5 ? "0" : "1", p.x, p.y);
                 } else {
                     ctx.beginPath();
-                    ctx.fillStyle = currentColors[p.colorIndex];
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    if (isEasterEggActive) {
+                        const goldenColors = ['rgba(253, 224, 71, 0.9)', 'rgba(250, 204, 21, 0.8)', 'rgba(251, 191, 36, 0.9)', 'rgba(252, 211, 77, 0.7)'];
+                        ctx.fillStyle = goldenColors[p.colorIndex];
+                        if (!p.baseSize) p.baseSize = p.size;
+                        const pulse = 1 + Math.sin(Date.now() * 0.003 + p.colorIndex) * 0.5;
+                        ctx.arc(p.x, p.y, p.baseSize * pulse * 1.5, 0, Math.PI * 2);
+                    } else {
+                        ctx.fillStyle = currentColors[p.colorIndex];
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    }
                     ctx.fill();
                 }
             });
@@ -152,7 +176,7 @@
         let keyBuffer = '';
         const handleKeys = (e) => {
             keyBuffer += e.key.toLowerCase();
-            if (keyBuffer.length > 30) keyBuffer = keyBuffer.slice(-30);
+            if (keyBuffer.length > 100) keyBuffer = keyBuffer.slice(-100);
 
             if (keyBuffer.includes('arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba')) {
                 activateEasterEgg();
@@ -176,25 +200,23 @@
 
         // --- EASTER EGG LOGIC ---
 
-        let isEasterEggActive = false;
         function activateEasterEgg() {
             isEasterEggActive = !isEasterEggActive;
             
             if (isEasterEggActive) {
                 console.log("%c🚨 Easter Egg Activated: SUPER ANTIGRAVITY MODE 🚀", "color: #10b981; font-weight: bold; font-size: 18px;");
-                mouse.radius = 1000;
+                mouse.radius = 400; // increased glow but not performance-killing screen size
             } else {
                 console.log("%cEaster Egg Deactivated. Returning to normal.", "color: #64748b; font-size: 14px;");
                 mouse.radius = 200;
+                initParticles(); // Snap particles back into the grid
             }
 
+            // Cleanup old overlays from previous aesthetic implementation
             let overlay = document.getElementById("trippy-overlay");
-            if (!overlay) {
-                overlay = document.createElement("div");
-                overlay.id = "trippy-overlay";
-                overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; backdrop-filter: hue-rotate(120deg) saturate(200%); transition: opacity 1s; opacity: 0;";
-                document.body.appendChild(overlay);
-            }
+            if (overlay) overlay.remove();
+            let styleEl = document.getElementById("true-antigravity-styles");
+            if (styleEl) styleEl.remove();
 
             const scrollY = window.scrollY;
             const centerY = scrollY + (window.innerHeight / 2);
@@ -203,7 +225,6 @@
             if (isEasterEggActive) {
                 document.body.style.transition = 'transform 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
                 document.body.style.transform = 'rotate(360deg)';
-                overlay.style.opacity = '1';
                 
                 setTimeout(() => {
                     document.body.style.transition = 'none';
@@ -216,7 +237,6 @@
                 
                 document.body.style.transition = 'transform 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
                 document.body.style.transform = 'rotate(0deg)';
-                overlay.style.opacity = '0';
                 
                 setTimeout(() => {
                     document.body.style.transition = 'none';
