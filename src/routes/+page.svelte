@@ -13,8 +13,82 @@
 
     let typedName = $state('');
     let isTyping = $state(true);
+    
+    let leetcodeData = $state(null);
+    let leetcodeLoading = $state(true);
+    let leetcodeError = $state(false);
+    let contributionGrid = $state([]);
+    let monthLabels = $state([]);
 
     onMount(() => {
+        Promise.all([
+            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/solved').then(r => r.json()),
+            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078').then(r => r.json()),
+            fetch('https://alfa-leetcode-api.onrender.com/prakharkatiyar078/calendar').then(r => r.json())
+        ])
+        .then(([solvedData, profileData, calendarData]) => {
+            if (solvedData && solvedData.solvedProblem) {
+                leetcodeData = { ...solvedData, ...profileData };
+                
+                if (calendarData && calendarData.submissionCalendar) {
+                    const calendar = JSON.parse(calendarData.submissionCalendar);
+                    const grid = [];
+                    const today = new Date();
+                    const daysToShow = 364; 
+                    
+                    const submissionsByDate = {};
+                    for (const [timestamp, count] of Object.entries(calendar)) {
+                        const date = new Date(parseInt(timestamp) * 1000);
+                        const dateString = date.toISOString().split('T')[0];
+                        submissionsByDate[dateString] = count;
+                    }
+                    
+                    const startDate = new Date(today);
+                    startDate.setDate(today.getDate() - daysToShow + 1);
+                    const startDayOfWeek = startDate.getDay();
+                    
+                    for (let i = 0; i < startDayOfWeek; i++) {
+                        grid.push({ date: null, count: 0, level: -1 });
+                    }
+                    
+                    let currentMonth = -1;
+                    const mLabels = [];
+
+                    for (let i = daysToShow - 1; i >= 0; i--) {
+                        const d = new Date(today);
+                        d.setDate(d.getDate() - i);
+                        const dateString = d.toISOString().split('T')[0];
+                        const count = submissionsByDate[dateString] || 0;
+                        
+                        const currentCol = Math.floor(grid.length / 7) + 1;
+                        const month = d.getMonth();
+                        if (month !== currentMonth) {
+                            mLabels.push({ label: d.toLocaleString('default', { month: 'short' }), col: currentCol });
+                            currentMonth = month;
+                        }
+
+                        let level = 0;
+                        if (count > 0 && count <= 2) level = 1;
+                        else if (count <= 5) level = 2;
+                        else if (count <= 9) level = 3;
+                        else if (count > 9) level = 4;
+                        
+                        grid.push({ date: dateString, count, level, formatted: d.toLocaleDateString() });
+                    }
+                    contributionGrid = grid;
+                    monthLabels = mLabels;
+                }
+            } else {
+                leetcodeError = true;
+            }
+        })
+        .catch(() => {
+            leetcodeError = true;
+        })
+        .finally(() => {
+            leetcodeLoading = false;
+        });
+
         // Typing animation for the name
         const nameToType = me.name;
         let i = 0;
@@ -183,6 +257,100 @@
                     </div>
                 </div>
             {/each}
+        </div>
+    </section>
+
+    <!-- LeetCode Section -->
+    <section id="leetcode" class="leetcode">
+        <h2 class="animate-section">
+            <svg class="icon-heading" viewBox="0 0 24 24" width="36" height="36" fill="currentColor" style="display:inline-block; vertical-align:-8px; margin-right:8px;"><path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863s.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.609-2.636a5.055 5.055 0 0 0-2.445-1.337l2.467-2.503c.516-.514.498-1.366-.037-1.901-.535-.535-1.387-.552-1.902-.038l-10.1 10.101c-.981.982-1.467 2.418-1.467 3.896s.486 2.915 1.467 3.896l10.1 10.101c.515.515 1.366.497 1.902-.038.536-.536.553-1.387.038-1.902l-2.467-2.503a5.055 5.055 0 0 0 2.445-1.336l2.609-2.636c.514-.514.496-1.365-.039-1.9-.535-.535-1.386-.553-1.9-.038z"/></svg>
+            LeetCode Profile
+        </h2>
+        <div class="bento-card animate-section">
+            {#if leetcodeLoading}
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading API data...</p>
+                </div>
+            {:else if leetcodeError}
+                <div class="error-state">
+                    <p>Unable to load live stats due to API limits.</p>
+                    <a href="https://leetcode.com/u/prakharkatiyar078/" target="_blank" rel="noopener noreferrer" class="view-btn">View on LeetCode</a>
+                </div>
+            {:else}
+                <div class="leetcode-content">
+                    <div class="profile-info">
+                        <img src={leetcodeData.avatar} alt="LeetCode Avatar" class="avatar" />
+                        <div class="info-text">
+                            <h3>{leetcodeData.name || 'Prakhar Katiyar'}</h3>
+                            <a href="https://leetcode.com/u/prakharkatiyar078/" target="_blank" rel="noopener noreferrer" class="leetcode-link">@prakharkatiyar078</a>
+                            <div class="rank-badge">Rank: {leetcodeData.ranking.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-container">
+                        <div class="total-solved">
+                            <span class="number">{leetcodeData.solvedProblem}</span>
+                            <span class="label">Problems Solved</span>
+                        </div>
+                        <div class="difficulty-bars">
+                            <div class="stat-row easy">
+                                <div class="stat-label">Easy</div>
+                                <div class="bar-bg">
+                                    <div class="bar-fill" style="width: {(leetcodeData.easySolved / leetcodeData.solvedProblem) * 100}%"></div>
+                                </div>
+                                <div class="stat-count">{leetcodeData.easySolved}</div>
+                            </div>
+                            <div class="stat-row medium">
+                                <div class="stat-label">Medium</div>
+                                <div class="bar-bg">
+                                    <div class="bar-fill" style="width: {(leetcodeData.mediumSolved / leetcodeData.solvedProblem) * 100}%"></div>
+                                </div>
+                                <div class="stat-count">{leetcodeData.mediumSolved}</div>
+                            </div>
+                            <div class="stat-row hard">
+                                <div class="stat-label">Hard</div>
+                                <div class="bar-bg">
+                                    <div class="bar-fill" style="width: {(leetcodeData.hardSolved / leetcodeData.solvedProblem) * 100}%"></div>
+                                </div>
+                                <div class="stat-count">{leetcodeData.hardSolved}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {#if contributionGrid.length > 0}
+                    <div class="calendar-container">
+                        <h4>Past Year Submissions</h4>
+                        <div class="graph-scroll-wrapper">
+                            <div class="calendar-layout">
+                                <div class="calendar-y-axis">
+                                    <span></span>
+                                    <span></span>
+                                    <span>Mon</span>
+                                    <span></span>
+                                    <span>Wed</span>
+                                    <span></span>
+                                    <span>Fri</span>
+                                    <span></span>
+                                </div>
+                                <div class="calendar-content">
+                                    <div class="month-labels" style="display: grid; grid-template-columns: repeat(53, 16px); gap: 4px; pointer-events: none;">
+                                        {#each monthLabels as month}
+                                            <span style="grid-column: {month.col};">{month.label}</span>
+                                        {/each}
+                                    </div>
+                                    <div class="contribution-graph">
+                                        {#each contributionGrid as cell}
+                                            <div class="cube level-{cell.level}" title={cell.date ? `${cell.count} submissions on ${cell.formatted}` : ''}></div>
+                                        {/each}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+            {/if}
         </div>
     </section>
 
@@ -522,6 +690,286 @@
                         background: rgba(99, 102, 241, 0.15);
                         border-color: var(--primary-color);
                     }
+                }
+            }
+        }
+    }
+
+    .leetcode {
+        margin-bottom: 2rem;
+        
+        .loading-state, .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--secondary-color);
+            gap: 1rem;
+
+            .view-btn {
+                background: linear-gradient(135deg, #ffa116, #d97a00);
+                color: white;
+                padding: 0.8rem 1.8rem;
+                border-radius: 99px;
+                text-decoration: none;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(255, 161, 22, 0.3);
+                transition: all 0.3s;
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(255, 161, 22, 0.4);
+                }
+            }
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255, 161, 22, 0.2);
+            border-top-color: #ffa116;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        .leetcode-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex: 1;
+            min-width: 250px;
+
+            .avatar {
+                width: 90px;
+                height: 90px;
+                border-radius: 20px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                border: 2px solid var(--border-color);
+                object-fit: cover;
+            }
+
+            .info-text {
+                h3 {
+                    margin: 0 0 0.2rem 0;
+                    color: var(--text-color);
+                    font-size: 1.5rem;
+                }
+                .leetcode-link {
+                    color: #ffa116;
+                    text-decoration: none;
+                    display: block;
+                    margin-bottom: 0.8rem;
+                    font-weight: 500;
+                    
+                    &:hover { text-decoration: underline; }
+                }
+                .rank-badge {
+                    display: inline-block;
+                    background: rgba(255, 161, 22, 0.1);
+                    color: #ffa116;
+                    padding: 0.3rem 0.8rem;
+                    border-radius: 99px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    border: 1px solid rgba(255, 161, 22, 0.2);
+                }
+            }
+        }
+
+        .stats-container {
+            flex: 2;
+            min-width: 300px;
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+
+            .total-solved {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 161, 22, 0.05);
+                padding: 1.5rem;
+                border-radius: 20px;
+                min-width: 150px;
+                border: 1px solid rgba(255, 161, 22, 0.1);
+
+                .number {
+                    font-size: 3.5rem;
+                    font-weight: 800;
+                    color: var(--text-color);
+                    line-height: 1;
+                    margin-bottom: 0.5rem;
+                }
+                .label {
+                    color: var(--secondary-color);
+                    font-weight: 500;
+                }
+            }
+
+            .difficulty-bars {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 1.2rem;
+
+                .stat-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+
+                    .stat-label {
+                        width: 60px;
+                        font-weight: 500;
+                        font-size: 0.95rem;
+                    }
+
+                    .bar-bg {
+                        flex: 1;
+                        height: 8px;
+                        background: var(--bg-color);
+                        border-radius: 99px;
+                        overflow: hidden;
+                        border: 1px solid var(--border-color);
+
+                        .bar-fill {
+                            height: 100%;
+                            border-radius: 99px;
+                            transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        }
+                    }
+
+                    .stat-count {
+                        width: 40px;
+                        text-align: right;
+                        font-weight: 600;
+                        color: var(--text-color);
+                    }
+
+                    &.easy {
+                        .stat-label { color: #00b8a3; }
+                        .bar-fill { background: #00b8a3; box-shadow: 0 0 10px rgba(0, 184, 163, 0.5); }
+                    }
+                    &.medium {
+                        .stat-label { color: #ffc01e; }
+                        .bar-fill { background: #ffc01e; box-shadow: 0 0 10px rgba(255, 192, 30, 0.5); }
+                    }
+                    &.hard {
+                        .stat-label { color: #ef4743; }
+                        .bar-fill { background: #ef4743; box-shadow: 0 0 10px rgba(239, 71, 67, 0.5); }
+                    }
+                }
+            }
+        }
+
+        .calendar-container {
+            width: 100%;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+
+            h4 {
+                color: var(--text-color);
+                margin: 0 0 1rem 0;
+                font-size: 1.1rem;
+            }
+
+            .graph-scroll-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 1rem;
+                
+                &::-webkit-scrollbar { height: 6px; }
+                &::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+            }
+
+            .calendar-layout {
+                display: flex;
+                gap: 10px;
+                width: max-content;
+                align-items: flex-end;
+            }
+            
+            .calendar-y-axis {
+                display: grid;
+                grid-template-rows: 16px repeat(7, 12px);
+                gap: 4px;
+                text-align: right;
+
+                span {
+                    font-size: 0.75rem;
+                    color: var(--secondary-color);
+                    line-height: 12px;
+                }
+            }
+
+            .calendar-content {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .month-labels {
+                height: 16px;
+                span {
+                    font-size: 0.75rem;
+                    color: var(--secondary-color);
+                    line-height: 16px;
+                    display: block;
+                    width: max-content;
+                }
+            }
+
+            .contribution-graph {
+                display: grid;
+                grid-auto-flow: column;
+                grid-template-rows: repeat(7, 12px);
+                grid-auto-columns: 12px;
+                gap: 4px;
+
+                .cube {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 2px;
+                    background: rgba(255, 255, 255, 0.05);
+
+                    &.level--1 { background: transparent; }
+                    &.level-0 { background: rgba(150, 150, 150, 0.1); }
+                    &.level-1 { background: rgba(0, 184, 163, 0.3); border: 1px solid rgba(0, 184, 163, 0.4); }
+                    &.level-2 { background: rgba(0, 184, 163, 0.6); border: 1px solid rgba(0, 184, 163, 0.7); }
+                    &.level-3 { background: rgba(0, 184, 163, 0.8); border: 1px solid rgba(0, 184, 163, 0.9); }
+                    &.level-4 { background: #00b8a3; box-shadow: 0 0 5px rgba(0, 184, 163, 0.6); }
+
+                    &:hover:not(.level--1) {
+                        transform: scale(1.2);
+                        z-index: 10;
+                        box-shadow: 0 0 10px rgba(0, 184, 163, 0.8);
+                        transition: all 0.2s;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                flex-direction: column;
+                align-items: stretch;
+                
+                .total-solved {
+                    flex-direction: row;
+                    justify-content: space-between;
+                    padding: 1.5rem 2rem;
+                    
+                    .number { font-size: 2.5rem; margin: 0; }
                 }
             }
         }

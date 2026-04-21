@@ -363,6 +363,7 @@
 					<li><a href="#about" onclick={closeMenu}>About</a></li>
 					<li><a href="#experience" onclick={closeMenu}>Experience</a></li>
 					<li><a href="#projects" onclick={closeMenu}>Projects</a></li>
+					<li><a href="#leetcode" onclick={closeMenu}>LeetCode</a></li>
 					<li><a href="#skills" onclick={closeMenu}>Skills</a></li>
 				</ul>
 				<button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle Theme">
